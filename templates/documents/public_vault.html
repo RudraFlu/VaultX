@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Public Vault | VaultX{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <h1>Public Vault</h1>
+        <p class="text-muted">
+            Browse and access publicly available college study materials.
+        </p>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{% url 'public_vault' %}">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        placeholder="Search study materials..."
+                        value="{{ query }}"
+                    >
+                    <button class="btn btn-primary" type="submit">
+                        Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <h5 class="mb-3">Study Materials</h5>
+
+            {% if documents %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Last Modified</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for document in documents %}
+                                <tr>
+                                    <td>
+                                        <span class="fw-semibold">
+                                            {{ document.name }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge text-bg-secondary">
+                                            {{ document.file_type|upper }}
+                                        </span>
+                                    </td>
+
+                                    <td>{{ document.size }}</td>
+                                    <td>{{ document.modified }}</td>
+
+                                    <td>
+                                        <a
+                                            href="{% url 'download_public_document' document.id %}"
+                                            class="btn btn-sm btn-outline-primary">
+                                            Download
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+                <div class="text-center py-5">
+                    <h5>No study materials found</h5>
+                    <p class="text-muted mb-0">
+                        Try a different search term.
+                    </p>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document | VaultX{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <h2 class="mb-4">Upload Document</h2>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <button type="submit" class="btn btn-primary">
+                    Upload Document
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+<body>
+    <h1>Upload a Document</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit">Upload Document</button>
+    </form>
+
+    <p><a href="{% url 'home' %}">Back to Home</a></p>
+</body>
+</html>

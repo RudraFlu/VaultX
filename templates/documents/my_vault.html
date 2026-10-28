@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}My Vault | VaultX{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+<body>
+    <h1>My Vault</h1>
+
+    <p>Welcome, {{ request.user.username }}!</p>
+
+    <p>
+        <a href="{% url 'upload_doc' %}">Upload a Document</a>
+    </p>
+
+    {% if documents %}
+        <table border="1" cellpadding="10">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>File Type</th>
+                    <th>Uploaded On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for document in documents %}
+                    <tr>
+                        <td>{{ document.title }}</td>
+                        <td>{{ document.category|default:"Uncategorized" }}</td>
+                        <td>{{ document.file_type }}</td>
+                        <td>{{ document.created_at|date:"d M Y" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't uploaded any documents yet.</p>
+    {% endif %}
+
+    <p><a href="{% url 'home' %}">Back to Home</a></p>
+</body>
+</div>
+
+{% endblock %}

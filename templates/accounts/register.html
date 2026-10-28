@@ -1,26 +1,32 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | VaultX</title>
-</head>
-<body>
-    <h1>Create your VaultX account</h1>
+{% extends "base.html" %}
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+{% block title %}Register | VaultX{% endblock %}
 
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
+{% block content %}
 
-    <p>Already registered? <a href="{% url 'login' %}">Login</a></p>
-</body>
-</html>
+<div class="container py-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <h2 class="mb-4">Create Your VaultX Account</h2>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                 {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    Register
+                </button>
+            </form>
+
+            <p class="mt-3">
+                Already have an account?
+                <a href="{% url 'login' %}">Login</a>
+            </p>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

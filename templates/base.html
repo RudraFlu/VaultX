@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}VaultX{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'public_vault' %}">VaultX</a>
+
+        <div class="nav-links">
+            {% if request.user.is_authenticated %}
+
+                {% if request.resolver_match.url_name == 'my_vault' %}
+                    <a href="{% url 'public_vault' %}" class="btn btn-outline-light btn-sm">
+                        Public Vault
+                    </a>
+                    <a href="{% url 'upload_doc' %}" class="btn btn-outline-light btn-sm">
+                        Upload
+                    </a>
+                {% elif request.resolver_match.url_name == 'upload_doc'%}
+                    <a href="{% url 'public_vault' %}" class="btn btn-outline-light btn-sm">
+                        Public Vault
+                    </a>
+                    <a href="{% url 'my_vault' %}" class="btn btn-outline-light btn-sm">
+                        My Vault
+                    </a>
+                {% else %}
+                    <a href="{% url 'my_vault' %}" class="btn btn-outline-light btn-sm">
+                        My Vault
+                    </a>
+                {% endif %}
+
+                <span class="nav-user">{{ request.user.username }}</span>
+
+                <form method="POST" action="{% url 'logout' %}" class="nav-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-light btn-sm">
+                        Logout
+                    </button>
+                </form>
+
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+    <div class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>
