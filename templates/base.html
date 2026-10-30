@@ -50,6 +50,11 @@
                 </form>
 
             {% else %}
+                {% if request.resolver_match.url_name != 'public_vault' and request.resolver_match.url_name != 'home' %}
+                    <a href="{% url 'public_vault' %}" class="btn btn-outline-light btn-sm">
+                        Public Vault
+                    </a>
+                {% endif %}
                 <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
                 <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Register</a>
             {% endif %}

@@ -24,7 +24,7 @@ class DocUploadForm(forms.ModelForm):
         ext = os.path.splitext(uploaded_file.name)[1].lower()
         if ext not in allowed_extensions:
             raise forms.ValidationError(
-                "Unsupprted File type"
+                "Unsupported File type"
             )
         return uploaded_file
         

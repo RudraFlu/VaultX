@@ -7,8 +7,13 @@ urlpatterns = [
     path("my-vault/", views.my_vault, name="my_vault"),
     path("public-vault/", views.public_vault, name="public_vault"),
     path(
-        "public-vault/download/<int:document_id>/",
-        views.download_public_document,
-        name="download_public_document",
-    )
+        "shared-download/",
+        views.download_shared_file,
+        name="download_shared_file",
+    ),
+    path(
+        "shared-preview/",
+        views.preview_shared_file,
+        name="preview_shared_file",
+    ),
 ]

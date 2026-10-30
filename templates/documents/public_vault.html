@@ -3,96 +3,143 @@
 {% block title %}Public Vault | VaultX{% endblock %}
 
 {% block content %}
-
 <div class="container py-5">
 
-    <div class="mb-4">
-        <h1>Public Vault</h1>
-        <p class="text-muted">
-            Browse and access publicly available college study materials.
-        </p>
-    </div>
+    <h1 class="mb-3">Public Vault</h1>
+    <p class="text-muted">
+        Browse files and folders from the college shared drive.
+    </p>
+<form method="GET" action="{% url 'public_vault' %}" class="mb-4">
+    <input type="hidden" name="path" value="{{ current_path }}">
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{% url 'public_vault' %}">
-                <div class="input-group">
-                    <input
-                        type="text"
-                        name="q"
-                        class="form-control"
-                        placeholder="Search study materials..."
-                        value="{{ query }}"
-                    >
-                    <button class="btn btn-primary" type="submit">
-                        Search
-                    </button>
-                </div>
-            </form>
+    <div class="input-group">
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Search files and folders..."
+            value="{{ query }}"
+            aria-label="Search files and folders"
+        >
+        <button type="submit" class="btn btn-primary">Search</button>
+
+        {% if query %}
+            <a
+                href="{% url 'public_vault' %}?path={{ current_path|urlencode }}"
+                class="btn btn-outline-primary"
+            >
+                Clear
+            </a>
+        {% endif %}
+    </div>
+</form>
+    {% if not share_available %}
+        <div class="alert alert-warning">
+            <strong>Shared drive unavailable.</strong>
+            <p class="mb-0">
+                Connect to the college network or VPN and refresh the page.
+            </p>
         </div>
-    </div>
+    {% else %}
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
+        <nav class="mb-4">
+            <a href="{% url 'public_vault' %}">Shared Drive</a>
 
-            <h5 class="mb-3">Study Materials</h5>
+            {% for crumb in breadcrumbs %}
+                / <a href="{% url 'public_vault' %}?path={{ crumb.path|urlencode }}">
+                    {{ crumb.name }}
+                </a>
+            {% endfor %}
+        </nav>
 
-            {% if documents %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+        {% if current_path %}
+            <p>
+                <a href="{% url 'public_vault' %}?path={{ current_path|urlencode }}">
+                    Refresh folder
+                </a>
+            </p>
+        {% endif %}
+
+        {% if items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Modified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in items %}
                             <tr>
-                                <th>Document</th>
-                                <th>Type</th>
-                                <th>Size</th>
-                                <th>Last Modified</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
+                                <td>
+                                    {% if item.is_dir %}
+                                        📁
+                                        <a href="{% url 'public_vault' %}?path={{ item.path|urlencode }}">
+                                            {{ item.name }}
+                                        </a>
+                                    {% else %}
+                                        📄 {{ item.name }}
+                                    {% endif %}
+                                </td>
 
-                        <tbody>
-                            {% for document in documents %}
-                                <tr>
-                                    <td>
-                                        <span class="fw-semibold">
-                                            {{ document.name }}
-                                        </span>
-                                    </td>
+                                <td>
+                                    {% if item.is_dir %}
+                                        Folder
+                                    {% else %}
+                                        {{ item.name|slice:"-10:"|default:"File" }}
+                                    {% endif %}
+                                </td>
 
-                                    <td>
-                                        <span class="badge text-bg-secondary">
-                                            {{ document.file_type|upper }}
-                                        </span>
-                                    </td>
+                                <td>
+                                    {% if item.size != None %}
+                                        {% widthratio item.size 1048576 1 %} MB
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                    <td>{{ document.size }}</td>
-                                    <td>{{ document.modified }}</td>
+                                <td>
+                                    {% if item.modified %}
+                                        {{ item.modified|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                    <td>
-                                        <a
-                                            href="{% url 'download_public_document' document.id %}"
-                                            class="btn btn-sm btn-outline-primary">
+                                <td>
+                                    {% if not item.is_dir %}
+                                        {% with lower_name=item.name|lower %}
+                                            {% if lower_name|slice:"-4:" == ".pdf" or lower_name|slice:"-4:" == ".png" or lower_name|slice:"-4:" == ".jpg" or lower_name|slice:"-5:" == ".jpeg" or lower_name|slice:"-4:" == ".gif" or lower_name|slice:"-5:" == ".webp" %}
+                                                <a class="btn btn-sm btn-outline-primary"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   href="{% url 'preview_shared_file' %}?path={{ item.path|urlencode }}">
+                                                    Preview
+                                                </a>
+                                            {% endif %}
+                                        {% endwith %}
+
+                                        <a class="btn btn-sm btn-primary"
+                                           href="{% url 'download_shared_file' %}?path={{ item.path|urlencode }}">
                                             Download
                                         </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">This folder is empty.</p>
+        {% endif %}
 
-            {% else %}
-                <div class="text-center py-5">
-                    <h5>No study materials found</h5>
-                    <p class="text-muted mb-0">
-                        Try a different search term.
-                    </p>
-                </div>
-            {% endif %}
-
-        </div>
-    </div>
+    {% endif %}
 
 </div>
-
 {% endblock %}

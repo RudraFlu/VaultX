@@ -1,10 +1,23 @@
+from pathlib import Path
 from django.shortcuts import render,redirect,get_object_or_404
 from django.http import FileResponse, Http404
+from django.utils.http import http_date
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import DocUploadForm
 from .models import Document
-from pathlib import Path
+from .services import get_shared_items, resolve_shared_path
+
+PREVIEW_TYPES = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+
 def home(request):
     return render(request,"home.html")
 
@@ -45,46 +58,79 @@ def my_vault(request):
     )
     
 def public_vault(request):
+    relative_path = request.GET.get("path", "").strip()
     query = request.GET.get("q", "").strip()
 
-    documents = Document.objects.filter(
-        visibility=Document.Visibility.PUBLIC
-    )
+    items = get_shared_items(relative_path)
 
-    if query:
-        documents = documents.filter(title__icontains=query)
+    if items is not None and query:
+        items = [
+            item for item in items
+            if query.casefold() in item["name"].casefold()
+        ]
 
-    results = []
+    breadcrumbs = []
+    current_path = ""
 
-    for document in documents.order_by("title"):
-        results.append({
-    "id": document.id,
-    "name": document.title,
-    "file_type": document.file_type,
-    "size": f"{document.file_size / (1024 * 1024):.2f} MB",
-    "modified": document.updated_at.strftime("%d %b %Y"),
-})
+    for part in relative_path.replace("\\", "/").split("/"):
+        if part:
+            current_path = (
+                f"{current_path}/{part}" if current_path else part
+            )
+            breadcrumbs.append({
+                "name": part,
+                "path": current_path,
+            })
 
     return render(
         request,
         "documents/public_vault.html",
         {
-            "documents": results,
+            "items": items,
+            "current_path": relative_path,
+            "breadcrumbs": breadcrumbs,
+            "share_available": items is not None,
             "query": query,
         },
     )
-def download_public_document(request, document_id):
-    document = get_object_or_404(
-        Document,
-        id=document_id,
-        visibility=Document.Visibility.PUBLIC,
-    )
 
-    if not document.file:
+def download_shared_file(request):
+    relative_path = request.GET.get("path", "")
+    file_path = resolve_shared_path(relative_path)
+
+    if file_path is None or not file_path.is_file():
         raise Http404("File not found.")
 
-    return FileResponse(
-        document.file.open("rb"),
-        as_attachment=True,
-        filename=Path(document.file.name).name,
-    )
+    try:
+        return FileResponse(
+            file_path.open("rb"),
+            as_attachment=True,
+            filename=file_path.name,
+        )
+    except OSError:
+        raise Http404("File is unavailable.")
+
+
+def preview_shared_file(request):
+    relative_path = request.GET.get("path", "")
+    file_path = resolve_shared_path(relative_path)
+
+    if file_path is None or not file_path.is_file():
+        raise Http404("File not found.")
+
+    content_type = PREVIEW_TYPES.get(file_path.suffix.lower())
+
+    if content_type is None:
+        raise Http404("Preview is not supported for this file type.")
+
+    try:
+        response = FileResponse(
+            file_path.open("rb"),
+            content_type=content_type,
+        )
+        response["Content-Disposition"] = "inline"
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
+        return response
+    except OSError:
+        raise Http404("File is unavailable.")
