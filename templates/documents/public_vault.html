@@ -6,6 +6,11 @@
 <div class="container py-5">
 
     <h1 class="mb-3">Public Vault</h1>
+    {% if is_search %}
+    <p class="text-muted">
+        Showing content search results for "{{ query }}"
+    </p>
+{% endif %}
     <p class="text-muted">
         Browse files and folders from the college shared drive.
     </p>
@@ -75,62 +80,62 @@
 
                     <tbody>
                         {% for item in items %}
-                            <tr>
-                                <td>
-                                    {% if item.is_dir %}
-                                        📁
-                                        <a href="{% url 'public_vault' %}?path={{ item.path|urlencode }}">
-                                            {{ item.name }}
-                                        </a>
-                                    {% else %}
-                                        📄 {{ item.name }}
-                                    {% endif %}
-                                </td>
+                            
+<tr>
+    <td>
+        {% if item.is_dir %}
+            📁
+            <a href="{% url 'public_vault' %}?path={{ item.path|urlencode }}">
+                {{ item.name }}
+            </a>
+        {% else %}
+            📄 {{ item.name }}
 
-                                <td>
-                                    {% if item.is_dir %}
-                                        Folder
-                                    {% else %}
-                                        {{ item.name|slice:"-10:"|default:"File" }}
-                                    {% endif %}
-                                </td>
+            {% if is_search and item.excerpt %}
+                <div class="small text-muted mt-2">
+                    {{ item.excerpt|safe }}
+                </div>
+            {% endif %}
+        {% endif %}
+    </td>
 
-                                <td>
-                                    {% if item.size != None %}
-                                        {% widthratio item.size 1048576 1 %} MB
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
+    <td>
+        {% if item.is_dir %}
+            Folder
+        {% else %}
+            {{ item.name|slice:"-10:" }}
+        {% endif %}
+    </td>
 
-                                <td>
-                                    {% if item.modified %}
-                                        {{ item.modified|date:"d M Y" }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
+    <td>—</td>
 
-                                <td>
-                                    {% if not item.is_dir %}
-                                        {% with lower_name=item.name|lower %}
-                                            {% if lower_name|slice:"-4:" == ".pdf" or lower_name|slice:"-4:" == ".png" or lower_name|slice:"-4:" == ".jpg" or lower_name|slice:"-5:" == ".jpeg" or lower_name|slice:"-4:" == ".gif" or lower_name|slice:"-5:" == ".webp" %}
-                                                <a class="btn btn-sm btn-outline-primary"
-                                                   target="_blank"
-                                                   rel="noopener"
-                                                   href="{% url 'preview_shared_file' %}?path={{ item.path|urlencode }}">
-                                                    Preview
-                                                </a>
-                                            {% endif %}
-                                        {% endwith %}
+    <td>—</td>
 
-                                        <a class="btn btn-sm btn-primary"
-                                           href="{% url 'download_shared_file' %}?path={{ item.path|urlencode }}">
-                                            Download
-                                        </a>
-                                    {% endif %}
-                                </td>
-                            </tr>
+    <td>
+        {% if not item.is_dir %}
+            {% with lower_name=item.name|lower %}
+                {% if lower_name|slice:"-4:" == ".pdf" or lower_name|slice:"-4:" == ".png" or lower_name|slice:"-4:" == ".jpg" or lower_name|slice:"-5:" == ".jpeg" or lower_name|slice:"-4:" == ".gif" or lower_name|slice:"-5:" == ".webp" %}
+                    <a
+                        class="btn btn-sm btn-outline-primary"
+                        target="_blank"
+                        rel="noopener"
+                        href="{% url 'preview_shared_file' %}?path={{ item.path|urlencode }}"
+                    >
+                        Preview
+                    </a>
+                {% endif %}
+            {% endwith %}
+
+            <a
+                class="btn btn-sm btn-primary"
+                href="{% url 'download_shared_file' %}?path={{ item.path|urlencode }}"
+            >
+                Download
+            </a>
+        {% endif %}
+    </td>
+</tr>
+
                         {% endfor %}
                     </tbody>
                 </table>

@@ -8,7 +8,7 @@ from django.contrib import messages
 from .forms import DocUploadForm
 from .models import Document
 from .services import get_shared_items, resolve_shared_path
-
+from .search_index import search_documents
 PREVIEW_TYPES = {
     ".pdf": "application/pdf",
     ".png": "image/png",
@@ -56,18 +56,52 @@ def my_vault(request):
         "documents/my_vault.html",
         {"documents": doc}
     )
-    
+ 
 def public_vault(request):
     relative_path = request.GET.get("path", "").strip()
     query = request.GET.get("q", "").strip()
 
-    items = get_shared_items(relative_path)
+    if query:
+        current_items = get_shared_items(relative_path)
 
-    if items is not None and query:
-        items = [
-            item for item in items
-            if query.casefold() in item["name"].casefold()
-        ]
+        terms = query.casefold().split()
+
+        name_matches = []
+        matched_paths = set()
+
+        if current_items:
+            for item in current_items:
+                if item["is_dir"]:
+                    matched = all(term in item["name"].casefold() for term in terms)
+                else:
+                    matched = any(term in item["name"].casefold() for term in terms)
+
+                if matched:
+                    item["result_type"] = "name_match"
+                    name_matches.append(item)
+                    matched_paths.add(item["path"].casefold())
+
+        results = search_documents(query, limit=100)
+
+        other_results = []
+
+        for result in results:
+            if result["path"].casefold() in matched_paths:
+                continue
+
+            other_results.append({
+                "name": result["filename"],
+                "is_dir": False,
+                "path": result["path"],
+                "excerpt": result["excerpt"],
+                "relevance": result["relevance"],
+                "result_type": "content_match",
+            })
+
+        items = name_matches + other_results
+
+    else:
+        items = get_shared_items(relative_path)
 
     breadcrumbs = []
     current_path = ""
@@ -91,6 +125,7 @@ def public_vault(request):
             "breadcrumbs": breadcrumbs,
             "share_available": items is not None,
             "query": query,
+            "is_search": bool(query),
         },
     )
 
