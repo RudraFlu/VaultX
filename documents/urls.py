@@ -16,4 +16,15 @@ urlpatterns = [
         views.preview_shared_file,
         name="preview_shared_file",
     ),
+    path(
+    "download/<int:pk>/",
+    views.download_document,
+    name="download_document"
+),
+
+path(
+    "delete/<int:pk>/",
+    views.delete_document,
+    name="delete_document"
+),
 ]

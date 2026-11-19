@@ -1,35 +1,162 @@
+
 {% extends "base.html" %}
 
 {% block title %}Upload Document | VaultX{% endblock %}
 
 {% block content %}
 
-<div class="container py-5">
+<div class="container py-5" style="max-width: 850px;">
 
-    <h2 class="mb-4">Upload Document</h2>
+    <div class="mb-4">
+        <h2 class="fw-bold">Upload Document</h2>
+        <p class="text-muted">
+            Add a document to your personal VaultX collection.
+        </p>
+    </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
 
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
 
-                {{ form.as_p }}
+                {{ form.non_field_errors }}
 
-                <button type="submit" class="btn btn-primary">
-                    Upload Document
-                </button>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Choose a document</label>
+
+                    <label for="{{ form.file.id_for_label }}"
+                           id="drop-area"
+                           class="w-100 text-center p-5 rounded-4"
+                           style="border: 2px dashed #adb5bd; cursor: pointer; background: #f8f9fa;">
+
+                        <div class="mb-3">
+                            <span style="font-size: 42px;">📁</span>
+                        </div>
+
+                        <h5 class="fw-semibold">Drag and drop your file here</h5>
+                        <p class="text-muted mb-2">
+                            or click to browse your computer
+                        </p>
+
+                        <span class="badge bg-light text-dark border">
+                            PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, CSV
+                        </span>
+
+                        <p class="small text-muted mt-3 mb-0">
+                            Maximum file size: 100 MB
+                        </p>
+
+                    </label>
+
+                    <div class="d-none">
+                        {{ form.file }}
+                    </div>
+
+                    <div id="file-info" class="mt-3 small text-success fw-semibold"></div>
+
+                    {% for error in form.file.errors %}
+                        <div class="text-danger small mt-2">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}"
+                           class="form-label fw-semibold">
+                        Document Title
+                    </label>
+
+                    {{ form.title }}
+
+                    {% for error in form.title.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}"
+                           class="form-label fw-semibold">
+                        Description
+                    </label>
+
+                    {{ form.description }}
+
+                    {% for error in form.description.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                    {% for error in form.tags.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary px-4 py-2">
+                        Upload Document
+                    </button>
+
+                    <a href="{% url 'my_vault' %}"
+                       class="btn btn-outline-secondary px-4 py-2">
+                        Cancel
+                    </a>
+                </div>
+
             </form>
-
-            <p class="mt-3">
-                <a href="{% url 'my_vault' %}" class="btn btn-outline-primary">
-                    Back to My Vault
-                </a>
-            </p>
 
         </div>
     </div>
 
 </div>
+
+<script>
+    const fileInput = document.getElementById(
+        "{{ form.file.id_for_label }}"
+    );
+
+    const dropArea = document.getElementById("drop-area");
+    const fileInfo = document.getElementById("file-info");
+
+    function displayFile(file) {
+        if (!file) {
+            fileInfo.textContent = "";
+            return;
+        }
+
+        const size = (file.size / (1024 * 1024)).toFixed(2);
+
+        fileInfo.textContent =
+            "Selected: " + file.name + " (" + size + " MB)";
+    }
+
+    fileInput.addEventListener("change", function () {
+        displayFile(this.files[0]);
+    });
+
+    dropArea.addEventListener("dragover", function (event) {
+        event.preventDefault();
+        dropArea.style.borderColor = "#0d6efd";
+        dropArea.style.background = "#eaf2ff";
+    });
+
+    dropArea.addEventListener("dragleave", function () {
+        dropArea.style.borderColor = "#adb5bd";
+        dropArea.style.background = "#f8f9fa";
+    });
+
+    dropArea.addEventListener("drop", function (event) {
+        event.preventDefault();
+
+        dropArea.style.borderColor = "#adb5bd";
+        dropArea.style.background = "#f8f9fa";
+
+        if (event.dataTransfer.files.length) {
+            fileInput.files = event.dataTransfer.files;
+            displayFile(fileInput.files[0]);
+        }
+    });
+</script>
 
 {% endblock %}

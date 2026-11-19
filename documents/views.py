@@ -9,6 +9,7 @@ from .forms import DocUploadForm
 from .models import Document
 from .services import get_shared_items, resolve_shared_path
 from .search_index import search_documents
+from django.views.decorators.http import require_POST
 PREVIEW_TYPES = {
     ".pdf": "application/pdf",
     ".png": "image/png",
@@ -47,7 +48,37 @@ def upload_doc(request):
         "documents/upload.html",
         {"form": form},
     )
-    
+@login_required
+def download_document(request, pk):
+    document = get_object_or_404(
+        Document,
+        pk=pk,
+        owner=request.user
+    )
+
+    document.downloads += 1
+    document.save(update_fields=["downloads"])
+
+    return FileResponse(
+        document.file.open("rb"),
+        as_attachment=True,
+        filename=document.file.name.split("/")[-1],
+    )
+@login_required
+@require_POST
+def delete_document(request, pk):
+    document = get_object_or_404(
+        Document,
+        pk=pk,
+        owner=request.user
+    )
+
+    document.file.delete(save=False)
+    document.delete()
+
+    messages.success(request, "Document deleted successfully!")
+
+    return redirect("my_vault")
 @login_required
 def my_vault(request):
     doc = Document.objects.filter(owner=request.user).order_by("-created_at")
@@ -56,7 +87,7 @@ def my_vault(request):
         "documents/my_vault.html",
         {"documents": doc}
     )
- 
+
 def public_vault(request):
     relative_path = request.GET.get("path", "").strip()
     query = request.GET.get("q", "").strip()
