@@ -26,19 +26,20 @@ def home(request):
 def upload_doc(request):
     if request.method == "POST":
         form = DocUploadForm(request.POST, request.FILES)
+
         if form.is_valid():
-            document = form.save(commit = False)
+            document = form.save(commit=False)
             document.owner = request.user
             document.visibility = "PRIVATE"
-        
+
             document.file_size = document.file.size
             document.file_type = document.file.name.split(".")[-1].lower()
 
             document.save()
             form.save_m2m()
 
-        messages.success(request, "Document uploaded successfully!")
-        return redirect("upload_document")
+            messages.success(request, "Document uploaded successfully!")
+            return redirect("upload_doc")
 
     else:
         form = DocUploadForm()
